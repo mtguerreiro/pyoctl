@@ -83,6 +83,11 @@ def riccati_k(A, B, Q, R, K, dt):
     
     return K + dt * (-K @ A + -A.T @ K + -Q + K @ B @ R_inv @ B.T @ K)
 
+def riccati_k2(A, B, Q, R, K, dt):
+
+    R_inv = np.linalg.inv(R)
+    
+    return K - dt * (-K @ A + -A.T @ K + -Q + K @ B @ R_inv @ B.T @ K)
 
 def riccati_gains(A, B, Q, R, H, T, dt):
 
@@ -99,8 +104,10 @@ def riccati_gains(A, B, Q, R, H, T, dt):
     # Gain vector
     K = np.zeros((N, A.shape[0], A.shape[0]))
 
-    for n in range(1, N):
-        K[n] = riccati_k(A, B, Q, R, K[n - 1], dt)
+    K[N - 1] = H
+    for n in reversed(range(0, N - 1)):
+        K[n] = riccati_k2(A, B, Q, R, K[n + 1], dt)
+        #K[n] = riccati_k(A, B, Q, R, K[n - 1], dt)
 
     return K
 
@@ -139,7 +146,7 @@ def riccati_sim(A, B, Q, R, H, K, xi, T, dt=None):
     x[0] = xi
     for k in range(N - 1):
         #u[k] = F[None, k] @ x[k, :]
-        u[k] = R_inv @ B.T @ K[k] @ x[k, :]
+        u[k] = -R_inv @ B.T @ K[k] @ x[k, :]
         x[k + 1] = A @ x[k, :] + B @ u[k, :]
         #x[k + 1] = (A + B @ F[None, k]) @ x[k, :]
     u[N - 1] = R_inv @ B.T @ K[N - 1] @ x[N - 1, :]
