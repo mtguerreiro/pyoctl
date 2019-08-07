@@ -73,7 +73,8 @@ def dynprg_gains(A, B, Q, R, H, T, dt=None):
     return F
 
 
-def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None, gain='dynamic'):
+def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None, gain='dynamic',
+               sat_control=False, u_sat=None):
     """Simulates a system's response with dynamic programming gains.
 
     Parameters
@@ -120,6 +121,15 @@ def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None, gain='dynamic'):
         is applied at each time step. If `static`, the first value of `F` is
         applied at all time steps. By default, is `dynamic`.
 
+    sat_control : bool
+        Defines if control signal is bounded. By default, is `False`.
+
+    u_sat : list, NoneType
+        Minimum and maximum value allowed for each control signal. Each
+        element of the list corresponds to each control signal. Each element
+        of the list should be another list, as [min, max] value allowed. By
+        default, is `None`.
+
     Returns
     -------
     x : np.ndarray
@@ -157,22 +167,32 @@ def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None, gain='dynamic'):
 
     # Control
     u = np.zeros((N, n_controls))
+    if sat_control is True:
+        u_sat = np.array(u_sat)
     
     x[0] = xi
     if gain == 'dynamic':
         for k in range(N - 1):
             u[k] = F[None, k] @ x[k, :]
+            if sat_control is True:
+                u[k] = control_sat(u[k], u_sat)
             x[k + 1] = A @ x[k, :] + B @ u[k, :]
 
-            # Computes the last u so we don't have a discontinuity
-            u[N - 1] = F[None, N - 1] @ x[N - 1, :]
+        # Computes the last u so we don't have a discontinuity
+        u[N - 1] = F[None, N - 1] @ x[N - 1, :]
+        if sat_control is True:
+            u[N - 1] = control_sat(u[N - 1], u_sat)
     else:
         for k in range(N - 1):
             u[k] = F[None, 0] @ x[k, :]
+            if sat_control is True:
+                u[k] = control_sat(u[k], u_sat)
             x[k + 1] = A @ x[k, :] + B @ u[k, :]        
 
-            # Computes the last u so we don't have a discontinuity
-            u[N - 1] = F[None, 0] @ x[N - 1, :]
+        # Computes the last u so we don't have a discontinuity
+        u[N - 1] = F[None, 0] @ x[N - 1, :]
+        if sat_control is True:
+            u[N - 1] = control_sat(u[N - 1], u_sat)
             
     return x, u
 
@@ -363,3 +383,31 @@ def riccati_sim(A, B, Q, R, H, K, xi, T, dt=None):
     u[N - 1] = R_inv @ B.T @ K[N - 1] @ x[N - 1, :]
 
     return x, u 
+
+
+def control_sat(u, us):
+    """Helper function to saturate a control signal.
+
+    Warning: this function only works with 1-D control signals if `us` is a
+    list
+
+    Parameters
+    ----------
+    u : np.ndarray
+        Vector with control signal.
+
+    us : np.ndarray
+        Array containing saturation values. Each line should contain the
+        min and max value allowed for each control signal.
+        
+    Returns
+    -------
+    u : np.ndarray
+        Vector with saturated control signal.
+        
+    """
+    us = us.T
+    u[u < us[0]] = us[0]
+    u[u > us[1]] = us[1]
+    
+    return u
