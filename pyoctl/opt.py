@@ -73,7 +73,7 @@ def dynprg_gains(A, B, Q, R, H, T, dt=None):
     return F
 
 
-def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None):
+def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None, gain='dynamic'):
     """Simulates a system's response with dynamic programming gains.
 
     Parameters
@@ -115,6 +115,11 @@ def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None):
         discrete. If a number, the system is considered to be continuous and
         it is internally discretized. By default, is `None`.
 
+    gain : str
+        Defines if gain is dynamic or static. If `dynamic`, each value of `F`
+        is applied at each time step. If `static`, the first value of `F` is
+        applied at all time steps. By default, is `dynamic`.
+
     Returns
     -------
     x : np.ndarray
@@ -154,10 +159,21 @@ def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None):
     u = np.zeros((N, n_controls))
     
     x[0] = xi
-    for k in range(N - 1):
-        u[k] = F[None, k] @ x[k, :]
-        x[k + 1] = A @ x[k, :] + B @ u[k, :]
+    if gain == 'dynamic':
+        for k in range(N - 1):
+            u[k] = F[None, k] @ x[k, :]
+            x[k + 1] = A @ x[k, :] + B @ u[k, :]
 
+            # Computes the last u so we don't have a discontinuity
+            u[N - 1] = F[None, N - 1] @ x[N - 1, :]
+    else:
+        for k in range(N - 1):
+            u[k] = F[None, 0] @ x[k, :]
+            x[k + 1] = A @ x[k, :] + B @ u[k, :]        
+
+            # Computes the last u so we don't have a discontinuity
+            u[N - 1] = F[None, 0] @ x[N - 1, :]
+            
     return x, u
 
 
