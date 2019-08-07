@@ -13,7 +13,7 @@ xi = [2, 1]
 
 # --- Algorithm ---
 # Gains
-F = optctl.dynprg_gains(A, B, Q, R, H, xi, N)
+F = optctl.dynprg_gains(A, B, Q, R, H, N)
 
 # Simulation
 x, u = optctl.dynprg_sim(A, B, Q, R, H, F, xi, N)
