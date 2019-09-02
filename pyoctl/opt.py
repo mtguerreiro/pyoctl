@@ -6,25 +6,20 @@ def dynprg_gains(A, B, Q, R, H, T, dt=None):
 
     Parameters
     ----------
-    A : list
-        Coefficients of matrix A. Each element of the list should contain one
-        line from the model's A matrix.
+    A : np.ndarray
+        Coefficients of matrix A. 
 
-    B : list
-        Coefficients of matrix B. Each element of the list should contain one
-        line from the model's B matrix.
+    B : np.ndarray
+        Coefficients of matrix B.
 
-    Q : list
-        Coefficients of matrix Q. Each element of the list should contain one
-        line from the cost index's Q matrix.
+    Q : np.ndarray
+        Coefficients of matrix Q.
 
-    R : list
-        Coefficients of matrix H. Each element of the list should contain one
-        line from the cost index's R matrix.
+    R : np.ndarray
+        Coefficients of matrix H.
 
-    H : list
-        Coefficients of matrix H. Each element of the list should contain one
-        line from the cost index's H matrix.
+    H : np.ndarray
+        Coefficients of matrix H.
 
     T : int, float
         Final time or number of points to simulate.
@@ -32,21 +27,14 @@ def dynprg_gains(A, B, Q, R, H, T, dt=None):
     dt : int, float, NoneType
         Discretization interval. If `None`, the system is considered to be
         discrete. If a number, the system is considered to be continuous and
-        it is internally discretized. By default, is `None`.
+        it is discretized before computing gains. By default, is `None`.
 
     Returns
     -------
     F : np.ndarray
         Vector with state's gain for feedback.
         
-    """
-    # Model
-    A = np.array(A)
-    B = np.array(B)
-    Q = np.array(Q)
-    R = np.array(R)
-    H = np.array(H)
-        
+    """        
     if dt is None:
         N = int(T)        
     else:
@@ -79,34 +67,28 @@ def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None, gain='dynamic',
 
     Parameters
     ----------
-    A : list
-        Coefficients of matrix A. Each element of the list should contain one
-        line from the model's A matrix.
+    A : np.ndarray
+        Coefficients of matrix A.
 
-    B : list
-        Coefficients of matrix B. Each element of the list should contain one
-        line from the model's B matrix.
+    B : np.ndarray
+        Coefficients of matrix B.
 
-    Q : list
-        Coefficients of matrix Q. Each element of the list should contain one
-        line from the cost index's Q matrix.
+    Q : np.ndarray
+        Coefficients of matrix Q.
 
-    R : list
-        Coefficients of matrix H. Each element of the list should contain one
-        line from the cost index's R matrix.
+    R : np.ndarray
+        Coefficients of matrix H.
 
-    H : list
-        Coefficients of matrix H. Each element of the list should contain one
-        line from the cost index's H matrix.
+    H : np.ndarray
+        Coefficients of matrix H.
 
     F : np.ndarray
         Vector with state's gain for feedback. This vector must be of
         appropriate size, i.e., must be compatible with the number of
         simulation steps/points.
         
-    xi : list
-        States' initial conditions. Each element of the list corresponds to
-        one state.
+    xi : np.ndarray
+        States' initial conditions.
 
     T : int, float
         Final time or number of points to simulate.
@@ -114,7 +96,7 @@ def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None, gain='dynamic',
     dt : int, float, NoneType
         Discretization interval. If `None`, the system is considered to be
         discrete. If a number, the system is considered to be continuous and
-        it is internally discretized. By default, is `None`.
+        it is discretized before simulation. By default, is `None`.
 
     gain : str
         Defines if gain is dynamic or static. If `dynamic`, each value of `F`
@@ -138,15 +120,7 @@ def dynprg_sim(A, B, Q, R, H, F, xi, T, dt=None, gain='dynamic',
     u : np.ndarray
         A matrix, where each column corresponds to one control signal.
         
-    """
-    # Model
-    A = np.array(A)
-    B = np.array(B)
-    Q = np.array(Q)
-    R = np.array(R)
-    H = np.array(H)
-    xi = np.array(xi)
-        
+    """        
     if dt is None:
         N = int(T)        
     else:
@@ -239,25 +213,20 @@ def riccati_gains(A, B, Q, R, H, T, dt):
 
     Parameters
     ----------
-    A : list
-        Coefficients of matrix A. Each element of the list should contain one
-        line from the model's A matrix.
+    A : np.ndarray
+        Coefficients of matrix A.
 
-    B : list
-        Coefficients of matrix B. Each element of the list should contain one
-        line from the model's B matrix.
+    B : np.ndarray
+        Coefficients of matrix B.
 
-    Q : list
-        Coefficients of matrix Q. Each element of the list should contain one
-        line from the cost index's Q matrix.
+    Q : np.ndarray
+        Coefficients of matrix Q.
 
-    R : list
-        Coefficients of matrix H. Each element of the list should contain one
-        line from the cost index's R matrix.
+    R : np.ndarray
+        Coefficients of matrix H.
 
-    H : list
-        Coefficients of matrix H. Each element of the list should contain one
-        line from the cost index's H matrix.
+    H : np.ndarray
+        Coefficients of matrix H.
 
     T : int, float
         Final time or number of points to simulate.
@@ -271,13 +240,6 @@ def riccati_gains(A, B, Q, R, H, T, dt):
         Vector with state's gain for feedback.
         
     """
-    # Model
-    A = np.array(A)
-    B = np.array(B)
-    Q = np.array(Q)
-    R = np.array(R)
-    H = np.array(H)
-
     # Number of points
     N = int(T / dt)
 
@@ -291,40 +253,35 @@ def riccati_gains(A, B, Q, R, H, T, dt):
         K[n] = riccati_k(A, B, Q, R, K[n + 1], dt)
 
     return K
-
+        
+    
 def riccati_sim(A, B, Q, R, H, K, xi, T, dt=None):
     """Simulates a system's response with Riccati's gains.
 
     Parameters
     ----------
-    A : list
-        Coefficients of matrix A. Each element of the list should contain one
-        line from the model's A matrix.
+    A : np.ndarray
+        Coefficients of matrix A.
 
-    B : list
-        Coefficients of matrix B. Each element of the list should contain one
-        line from the model's B matrix.
+    B : np.ndarray
+        Coefficients of matrix B.
 
-    Q : list
-        Coefficients of matrix Q. Each element of the list should contain one
-        line from the cost index's Q matrix.
+    Q : np.ndarray
+        Coefficients of matrix Q.
 
-    R : list
-        Coefficients of matrix H. Each element of the list should contain one
-        line from the cost index's R matrix.
+    R : np.ndarray
+        Coefficients of matrix H.
 
-    H : list
-        Coefficients of matrix H. Each element of the list should contain one
-        line from the cost index's H matrix.
+    H : np.ndarray
+        Coefficients of matrix H.
 
     K : np.ndarray
         Vector with state's gain for feedback. This vector must be of
         appropriate size, i.e., must be compatible with the number of
         simulation steps/points.
         
-    xi : list
-        States' initial conditions. Each element of the list corresponds to
-        one state.
+    xi : np.ndarray
+        States' initial conditions.
 
     T : int, float
         Final time or number of points to simulate.
@@ -332,7 +289,7 @@ def riccati_sim(A, B, Q, R, H, K, xi, T, dt=None):
     dt : int, float, NoneType
         Discretization interval. If `None`, the system is considered to be
         discrete. If a number, the system is considered to be continuous and
-        it is internally discretized. By default, is `None`.
+        it is discretized before simulation. By default, is `None`.
 
     Returns
     -------
@@ -343,14 +300,6 @@ def riccati_sim(A, B, Q, R, H, K, xi, T, dt=None):
         A matrix, where each column corresponds to one control signal.
         
     """
-    # Model
-    A = np.array(A)
-    B = np.array(B)
-    Q = np.array(Q)
-    R = np.array(R)
-    H = np.array(H)
-    xi = np.array(xi)
-
     # If model is not discrete, performs discretization
     if dt is None:
         N = int(T)        
