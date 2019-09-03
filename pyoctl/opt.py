@@ -208,6 +208,47 @@ def riccati_k(A, B, Q, R, K, dt):
     return K - dt * (-K @ A + -A.T @ K + -Q + K @ B @ R_inv @ B.T @ K)
 
 
+def riccati_s(A, B, Q, R, K, s, r, dt):
+    """Computes one integration step for Riccati's gain equation. Numerical
+    integration is performed backward in time.
+
+    Parameters
+    ----------
+    A : np.ndarray
+        Coefficients of matrix A.
+
+    B : np.ndarray
+        Coefficients of matrix B.
+
+    Q : np.ndarray
+        Coefficients of matrix Q.
+
+    R : np.ndarray
+        Coefficients of matrix H.
+
+    K : np.ndarray
+        Gain coefficients for the current step.
+
+    s : np.ndarray
+        Gain coefficients for the current step.
+
+    r : np.ndarray
+        Reference for the current step.
+
+    dt : int, float
+        Discretization interval.     
+
+    Returns
+    -------
+    np.ndarray
+        The value for K one step backward in time.
+        
+    """
+    R_inv = np.linalg.inv(R)
+    
+    return s + dt * (A.T - K @ B @ R_inv @ B.T) @ s - dt * Q @ r    
+
+
 def riccati_gains(A, B, Q, R, H, T, dt):
     """Computes gains from Riccati's equation.
 
@@ -253,8 +294,64 @@ def riccati_gains(A, B, Q, R, H, T, dt):
         K[n] = riccati_k(A, B, Q, R, K[n + 1], dt)
 
     return K
+
+
+def riccati_gains_tracking(A, B, Q, R, H, r, T, dt):
+    """Computes gains from Riccati's equation.
+
+    Parameters
+    ----------
+    A : np.ndarray
+        Coefficients of matrix A.
+
+    B : np.ndarray
+        Coefficients of matrix B.
+
+    Q : np.ndarray
+        Coefficients of matrix Q.
+
+    R : np.ndarray
+        Coefficients of matrix H.
+
+    H : np.ndarray
+        Coefficients of matrix H.
+
+    r : np.ndarray
+        Reference.
+
+    T : int, float
+        Final time or number of points to simulate.
+
+    dt : int, float
+        Discretization interval. 
+
+    Returns
+    -------
+    K : np.ndarray
+        Vector with state's gain for feedback.
         
+    """
+    # Number of points
+    N = int(T / dt)
+
+    # Gain vector
+    K = np.zeros((N, A.shape[0], A.shape[0]))
+    s = np.zeros((N, A.shape[0], 1))
+
+    # Order is reversed since integration must be performed from tf to t0
+    # (backwards in time) to meet K(tf) = H
+    K[N - 1] = H
+    for n in reversed(range(0, N - 1)):
+        K[n] = riccati_k(A, B, Q, R, K[n + 1], dt)
     
+    s[N - 1] = -H @ r[N - 1].reshape(-1, 1)
+    for n in reversed(range(0, N - 1)):
+        s[n] = riccati_s(A, B, Q, R, K[n + 1], s[n + 1],
+                         r[n + 1].reshape(-1, 1), dt)
+    
+    return K, s
+
+
 def riccati_sim(A, B, Q, R, H, K, xi, T, dt=None):
     """Simulates a system's response with Riccati's gains.
 
